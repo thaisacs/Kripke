@@ -18,6 +18,11 @@
 
 using namespace Kripke::Core;
 
+extern "C" {
+  void begin_timestep_();
+  void end_timestep_();
+}
+
 /**
   Run solver iterations.
 */
@@ -42,6 +47,7 @@ int Kripke::SteadyStateSolver (Kripke::Core::DataStore &data_store, size_t max_i
   // Loop over iterations
   double part_last = 0.0;
   for(size_t iter = 0;iter < max_iter;++ iter){
+    begin_timestep_();
 
 
     /*
@@ -103,8 +109,7 @@ int Kripke::SteadyStateSolver (Kripke::Core::DataStore &data_store, size_t max_i
     }
     part_last = part;
 
-
-
+    end_timestep_();
   }
 
   if(comm.rank() == 0){

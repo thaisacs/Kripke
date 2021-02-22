@@ -280,7 +280,7 @@ configure_file(${PROJECT_SOURCE_DIR}/src/KripkeConfig.h.in
 #
 # Define build targets for Kripke
 #
- 
+
 
 
 blt_add_library(
@@ -317,10 +317,10 @@ target_include_directories(kripke PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 	$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
-blt_add_executable( 
+blt_add_executable(
   NAME        kripke.exe
-  SOURCES     "src/kripke.cpp"
-  DEPENDS_ON  ${KRIPKE_DEPENDS} kripke 
+  SOURCES     "src/kripke.cpp" ../../kernel_stats/kernel_stats.o
+  DEPENDS_ON  ${KRIPKE_DEPENDS} kripke
 )
 
 
