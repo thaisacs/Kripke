@@ -217,10 +217,11 @@ message(STATUS "Caliper support is ${KRIPKE_USE_CALIPER}")
 # Use ENABLE_MPI=On if you want CMake to automatically figure out MPI
 # using FindMPI
 #
+set(ENABLE_MPI On)
 # Use ENABLE_MPI_WRAPPER if you want to use mpi compiler wrappers for CC/CXX 
 # 
-
 if(ENABLE_MPI)
+  message(STATUS "****************************************************")
 	set(KRIPKE_USE_MPI 1)	
 	list(APPEND KRIPKE_DEPENDS mpi)
 endif()
@@ -313,13 +314,15 @@ blt_add_library(
 )
 
 
-target_include_directories(kripke PUBLIC 
+target_include_directories(kripke PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 	$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
+SET(PI_LIB ${CMAKE_BINARY_DIR}/../../../utils/kernel_stats.o)
+
 blt_add_executable(
   NAME        kripke.exe
-  SOURCES     "src/kripke.cpp" ../../kernel_stats/kernel_stats.o
+  SOURCES     "src/kripke.cpp" ${PI_LIB}
   DEPENDS_ON  ${KRIPKE_DEPENDS} kripke
 )
 
