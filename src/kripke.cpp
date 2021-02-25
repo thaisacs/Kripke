@@ -32,7 +32,10 @@
 #include </bgsys/drivers/ppcfloor/spi/include/kernel/location.h>
 #endif
 
-
+extern "C" {
+  void init_timestep_();
+  void exit_timestep_();
+}
 
 void usage(void){
 
@@ -172,6 +175,7 @@ namespace {
 }
 
 int main(int argc, char **argv) {
+  init_timestep_();
   /*
    * Initialize MPI
    */
@@ -267,6 +271,8 @@ int main(int argc, char **argv) {
       int tid = omp_get_thread_num();
 #ifdef __bgq__
       int core = Kernel_ProcessorCoreID();
+#elif __APPLE__
+      int core = -1;
 #else
       int core = sched_getcpu();
 #endif
@@ -520,5 +526,6 @@ int main(int argc, char **argv) {
     printf("\n");
     printf("END\n");
   }
+  exit_timestep_();
   return (0);
 }

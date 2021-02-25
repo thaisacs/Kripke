@@ -10,8 +10,6 @@ cmake_minimum_required(VERSION 3.8)
 cmake_policy(SET CMP0057 NEW)
 
 project(KRIPKE LANGUAGES CXX)
-set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
-
 
 set(KRIPKE_VERSION "1.2.4")
 
@@ -28,8 +26,6 @@ set(ENABLE_DOCUMENTATION Off CACHE Bool "")
 
 # Use C++14 standard
 set(BLT_CXX_STD "c++14" CACHE STRING "")
-
-set(chai_DIR ${CURRENT_SOURCE_DIR}/tpl/chai)
 
 include(blt/SetupBLT.cmake)
 
@@ -60,6 +56,10 @@ if(ENABLE_CUDA)
 
 endif()
 
+#
+# Add googletest (needed by RAJA, etc)
+# 
+add_subdirectory(tpl/googletest)
 
 
 #
@@ -67,26 +67,74 @@ endif()
 # 
 option(ENABLE_CHAI "Enable CHAI/Umpire memory management" Off)
 if(ENABLE_CHAI)
+  if (DEFINED umpire_DIR)
+    find_package(umpire REQUIRED)
+    
+    if (ENABLE_MPI)
+      set(UMPIRE_DEPENDS mpi)
+    else()
+      set(UMPIRE_DEPENDS)
+    endif()
 
-  # Add CHAI (which brings in Umpire as a submodule)
-  add_subdirectory(tpl/chai)
-  
+    blt_register_library(
+      NAME umpire
+      INCLUDES ${UMPIRE_INCLUDE_DIRS}
+      LIBRARIES umpire
+      DEPENDS_ON ${UMPIRE_DEPENDS})
+  else ()
+    add_subdirectory(tpl/umpire)
+  endif()
+
+    # Umpire depends on camp
+    #  if (NOT TARGET camp)
+    #    if (DEFINED camp_DIR)
+    #      find_package(camp REQUIRED)
+    #      set_target_properties(camp PROPERTIES IMPORTED_GLOBAL TRUE)
+    #    else ()
+    #      message(FATAL_ERROR "camp is required. Please set camp_DIR")
+    #    endif()
+    #
+    #    if(ENABLE_CUDA)
+    #      blt_add_target_definitions(
+    #        TO camp
+    #        SCOPE INTERFACE
+    #        TARGET_DEFINITIONS CAMP_HAVE_CUDA)
+    #    endif()
+    #  endif ()
+
+  if (DEFINED chai_DIR)
+    find_package(chai REQUIRED)
+  else ()
+    add_subdirectory(tpl/chai)
+  endif ()
+
   set(ENABLE_TESTS Off CACHE Bool "")
-  
   set(KRIPKE_USE_CHAI 1)
-  
   list(APPEND KRIPKE_DEPENDS chai)
-  
 endif()
+
+#
+# Configure RAJA (REQUIRED)
+#
+if (DEFINED camp_DIR)
+  find_package(camp REQUIRED)
+else ()
+  add_subdirectory(tpl/camp)
+endif ()
+list(APPEND KRIPKE_DEPENDS camp)
+
 
 
 #
 # Configure RAJA (REQUIRED)
 #
-
-set(RAJA_ENABLE_TESTS Off CACHE Bool "")
-add_subdirectory(tpl/raja)
-
+if (DEFINED RAJA_DIR)
+  find_package(RAJA REQUIRED)
+else ()
+  set(ENABLE_EXAMPLES Off CACHE Bool "")
+  set(ENABLE_EXERCISES Off CACHE Bool "")
+  add_subdirectory(tpl/raja)
+endif ()
 list(APPEND KRIPKE_DEPENDS RAJA)
 
 
@@ -138,13 +186,20 @@ endif()
 option(ENABLE_CALIPER "Enable Caliper support" FALSE)
 
 if (ENABLE_CALIPER)
-  find_package(caliper REQUIRED)
+	if(EXISTS "${PROJECT_SOURCE_DIR}/tpl/caliper/CMakeLists.txt")
+		set(BUILD_SHARED_LIBS False CACHE BOOL "")
+    add_subdirectory(tpl/caliper)	
+		include_directories(tpl/caliper/include)
+	else()
+    find_package(caliper REQUIRED)
+	
+ 	endif()
 
-  set(KRIPKE_USE_CALIPER TRUE)
-  
-  blt_register_library(NAME caliper
-    INCLUDES ${caliper_INCLUDE_DIR}
-    LIBRARIES caliper)
+    blt_register_library(NAME caliper
+      INCLUDES ${caliper_INCLUDE_DIR}
+      LIBRARIES caliper)
+
+	set(KRIPKE_USE_CALIPER TRUE)
   
   list(APPEND KRIPKE_DEPENDS caliper)
   
@@ -162,9 +217,9 @@ message(STATUS "Caliper support is ${KRIPKE_USE_CALIPER}")
 # Use ENABLE_MPI=On if you want CMake to automatically figure out MPI
 # using FindMPI
 #
+set(ENABLE_MPI On)
 # Use ENABLE_MPI_WRAPPER if you want to use mpi compiler wrappers for CC/CXX 
 # 
-
 if(ENABLE_MPI)
 	set(KRIPKE_USE_MPI 1)	
 	list(APPEND KRIPKE_DEPENDS mpi)
@@ -225,7 +280,7 @@ configure_file(${PROJECT_SOURCE_DIR}/src/KripkeConfig.h.in
 #
 # Define build targets for Kripke
 #
- 
+
 
 
 blt_add_library(
@@ -258,14 +313,16 @@ blt_add_library(
 )
 
 
-target_include_directories(kripke PUBLIC 
+target_include_directories(kripke PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 	$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
-blt_add_executable( 
+SET(PI_LIB ${CMAKE_BINARY_DIR}/../../../utils/kernel_stats.o)
+
+blt_add_executable(
   NAME        kripke.exe
-  SOURCES     "src/kripke.cpp"
-  DEPENDS_ON  ${KRIPKE_DEPENDS} kripke 
+  SOURCES     "src/kripke.cpp" ${PI_LIB}
+  DEPENDS_ON  ${KRIPKE_DEPENDS} kripke
 )
 
 
