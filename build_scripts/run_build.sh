@@ -1,4 +1,7 @@
+#!/bin/bash
+
+cd ..
 mkdir build
 cd build
 cmake -DCMAKE_CXX_COMPILER=mpic++ ..
-make -j2
+make -j 2

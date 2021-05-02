@@ -317,7 +317,7 @@ target_include_directories(kripke PUBLIC
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 	$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>)
 
-SET(PI_LIB ${CMAKE_BINARY_DIR}/../../../utils/kernel_stats.o)
+SET(PI_LIB ${CMAKE_BINARY_DIR}/../../../utils/obj/kernel_stats.o ${CMAKE_BINARY_DIR}/../../../utils/obj/ifstats.o)
 
 blt_add_executable(
   NAME        kripke.exe

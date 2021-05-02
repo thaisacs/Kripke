@@ -519,6 +519,7 @@ int main(int argc, char **argv) {
     printf("  Number of unknowns: %lu\n", (unsigned long) num_unknowns);
   }
   
+  exit_timestep_();
   // Cleanup and exit
   Kripke::Core::Comm::finalize();
 
@@ -526,6 +527,5 @@ int main(int argc, char **argv) {
     printf("\n");
     printf("END\n");
   }
-  exit_timestep_();
   return (0);
 }
